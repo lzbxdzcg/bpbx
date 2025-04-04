@@ -1,0 +1,40 @@
+name: Obfuscate BPB Worker
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 1 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - run: npm install -g javascript-obfuscator
+
+      - run: wget -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/main/build/unobfuscated-worker.js
+
+      - run: |
+          javascript-obfuscator origin.js --output _worker.js \
+          --compact true \
+          --control-flow-flattening true \
+          --dead-code-injection true \
+          --identifier-names-generator hexadecimal \
+          --rename-globals true \
+          --string-array-encoding rc4 \
+          --transform-object-keys true
+
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: ":arrow_up: Update obfuscated worker"
+          commit_author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
